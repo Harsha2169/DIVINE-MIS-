@@ -1,0 +1,51 @@
+name: Deploy MIS to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare Pages Artifact
+        run: |
+          mkdir -p _site
+          # Copy production web assets to the root of the Pages artifact
+          cp -r web/* _site/
+          # Ensure old Surge CNAME is completely excluded
+          rm -f _site/CNAME
+          # Also support /web/ subpath for backward compatibility
+          mkdir -p _site/web
+          cp -r web/* _site/web/
+          rm -f _site/web/CNAME
+          # Prevent Jekyll processing to preserve all files
+          touch _site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

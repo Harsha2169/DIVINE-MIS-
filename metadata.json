@@ -1,0 +1,6 @@
+{
+  "name": "Divine MIS",
+  "description": "Divine Stamp Pvt Ltd - Manufacturing MIS foundation and analytics-ready architecture",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

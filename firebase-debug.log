@@ -1,0 +1,74 @@
+[debug] [2026-09-28T09:55:24.694Z] ----------------------------------------------------------------------
+[debug] [2026-09-28T09:55:24.698Z] Command:       /usr/local/bin/node /usr/local/bin/firebase projects:list
+[debug] [2026-09-28T09:55:24.698Z] CLI Version:   15.30.0
+[debug] [2026-09-28T09:55:24.698Z] Platform:      linux
+[debug] [2026-09-28T09:55:24.699Z] Node Version:  v22.23.2
+[debug] [2026-09-28T09:55:24.699Z] Detected Agent: unknown
+[debug] [2026-09-28T09:55:24.699Z] Time:          Mon Sep 28 2026 09:55:24 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-09-28T09:55:24.700Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-28T09:55:24.971Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-28T09:55:25.001Z] Running auto auth
+[debug] [2026-09-28T09:55:25.025Z] No OAuth tokens found
+[debug] [2026-09-28T09:55:25.027Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-09-28T09:55:25.258Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 403
+[debug] [2026-09-28T09:55:25.258Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-09-28T09:55:25.259Z] Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 403, Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+[debug] [2026-09-28T09:55:25.260Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 403, Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at responseToError (/usr/local/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/usr/local/lib/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+[debug] [2026-09-28T09:55:34.584Z] ----------------------------------------------------------------------
+[debug] [2026-09-28T09:55:34.587Z] Command:       /usr/local/bin/node /usr/local/bin/firebase projects:list
+[debug] [2026-09-28T09:55:34.587Z] CLI Version:   15.30.0
+[debug] [2026-09-28T09:55:34.587Z] Platform:      linux
+[debug] [2026-09-28T09:55:34.587Z] Node Version:  v22.23.2
+[debug] [2026-09-28T09:55:34.588Z] Detected Agent: unknown
+[debug] [2026-09-28T09:55:34.588Z] Time:          Mon Sep 28 2026 09:55:34 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-09-28T09:55:34.588Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-28T09:55:34.852Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-28T09:55:34.884Z] Running auto auth
+[debug] [2026-09-28T09:55:34.907Z] No OAuth tokens found
+[debug] [2026-09-28T09:55:34.910Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-09-28T09:55:35.139Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 403
+[debug] [2026-09-28T09:55:35.139Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-09-28T09:55:35.140Z] Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 403, Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+[debug] [2026-09-28T09:55:35.142Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects?pageSize=1000 had HTTP Error: 403, Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at responseToError (/usr/local/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/usr/local/lib/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.
+[debug] [2026-09-28T09:56:25.780Z] ----------------------------------------------------------------------
+[debug] [2026-09-28T09:56:25.787Z] Command:       /usr/local/bin/node /usr/local/bin/firebase deploy --only hosting --project divine-mis-dspl
+[debug] [2026-09-28T09:56:25.787Z] CLI Version:   15.30.0
+[debug] [2026-09-28T09:56:25.788Z] Platform:      linux
+[debug] [2026-09-28T09:56:25.788Z] Node Version:  v22.23.2
+[debug] [2026-09-28T09:56:25.788Z] Detected Agent: unknown
+[debug] [2026-09-28T09:56:25.788Z] Time:          Mon Sep 28 2026 09:56:25 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-09-28T09:56:25.788Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-28T09:56:27.937Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-28T09:56:27.957Z] Running auto auth
+[debug] [2026-09-28T09:56:27.961Z] [iam] checking project divine-mis-dspl for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-09-28T09:56:27.980Z] No OAuth tokens found
+[debug] [2026-09-28T09:56:27.982Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/divine-mis-dspl:testIamPermissions [none]
+[debug] [2026-09-28T09:56:27.982Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/divine-mis-dspl:testIamPermissions  x-goog-user-project=divine-mis-dspl
+[debug] [2026-09-28T09:56:27.982Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/divine-mis-dspl:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-09-28T09:56:29.241Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/divine-mis-dspl:testIamPermissions 400
+[debug] [2026-09-28T09:56:29.241Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/divine-mis-dspl:testIamPermissions {"error":{"code":400,"message":"Project 'projects/divine-mis-dspl' not found or deleted.","status":"INVALID_ARGUMENT","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"USER_PROJECT_DENIED","domain":"googleapis.com","metadata":{"containerInfo":"projects/divine-mis-dspl","service":"cloudresourcemanager.googleapis.com","consumer":"projects/divine-mis-dspl"}}]}}
+[debug] [2026-09-28T09:56:29.242Z] [iam] error while checking permissions, command may fail: Request to https://cloudresourcemanager.googleapis.com/v1/projects/divine-mis-dspl:testIamPermissions had HTTP Error: 400, Project 'projects/divine-mis-dspl' not found or deleted.
+[debug] [2026-09-28T09:56:29.242Z] No OAuth tokens found
+[debug] [2026-09-28T09:56:29.243Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/divine-mis-dspl [none]
+[debug] [2026-09-28T09:56:29.822Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/divine-mis-dspl 403
+[debug] [2026-09-28T09:56:29.822Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/divine-mis-dspl {"error":{"code":403,"message":"Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"activationUrl":"https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924","serviceTitle":"Firebase Management API","containerInfo":"399514583924","consumer":"projects/399514583924","service":"firebase.googleapis.com"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."},{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Google developers console API activation","url":"https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924"}]}]}}
+[debug] [2026-09-28T09:56:29.823Z] Request to https://firebase.googleapis.com/v1beta1/projects/divine-mis-dspl had HTTP Error: 403, Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+[debug] [2026-09-28T09:56:29.824Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/divine-mis-dspl had HTTP Error: 403, Firebase Management API has not been used in project 399514583924 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firebase.googleapis.com/overview?project=399514583924 then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.
+    at responseToError (/usr/local/lib/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/usr/local/lib/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+[error] 
+[error] Error: Failed to get Firebase project divine-mis-dspl. Please make sure the project exists and your account has permission to access it.

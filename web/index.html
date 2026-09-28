@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Divine MIS — Manufacturing Intelligence Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .badge-ceo { background-color: #ede9fe; color: #6d28d9; border: 1px solid #c4b5fd; }
+    .badge-admin { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .badge-manager { background-color: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+    .badge-supervisor { background-color: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+    .no-data-tag { background-color: #f1f5f9; color: #64748b; font-style: italic; font-weight: 500; }
+    @media print {
+      header, nav, #commonFilterBar, #connectionBanner, #android-info, footer, .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .print-only { display: block !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- TOP HEADER -->
+  <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+        <div class="w-10 h-10 rounded-lg bg-indigo-500 flex items-center justify-center font-bold text-xl shadow">
+          <i class="fa-solid fa-industry text-white"></i>
+        </div>
+        <div>
+          <div class="font-bold text-lg leading-tight tracking-wide">Divine MIS</div>
+          <div class="text-xs text-indigo-200">Divine Stamp Pvt Ltd — Manufacturing Portal</div>
+        </div>
+      </div>
+
+      <!-- Live Sync Status, RBAC & Auth -->
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <!-- Live Firestore State Pill -->
+        <div id="liveStatusBadge" class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 bg-indigo-950/80 border border-indigo-700 rounded-lg text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-indigo-200 font-mono text-[11px]" id="liveStatusText">Firestore Live</span>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="flex items-center space-x-2 bg-indigo-800/80 px-2.5 py-1.5 rounded-lg border border-indigo-700">
+          <span class="text-xs text-indigo-300 font-medium hidden md:inline">Role:</span>
+          <select id="roleSelector" class="bg-indigo-950 text-white text-xs rounded px-2 py-1 border border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-400 font-semibold cursor-pointer">
+            <option value="CEO">CEO (Executive View)</option>
+            <option value="ADMIN">ADMIN (Full Access)</option>
+            <option value="MANAGER">MANAGER (Operations & QC)</option>
+            <option value="SUPERVISOR">SUPERVISOR (Floor Shift)</option>
+          </select>
+          <span id="roleBadge" class="badge-ceo text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">CEO</span>
+        </div>
+
+        <!-- Auth Sign In / Out -->
+        <button id="authBtn" onclick="openAuthModal()" class="flex items-center space-x-1.5 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-500 transition shadow">
+          <i class="fa-solid fa-user-shield text-xs"></i>
+          <span id="authBtnText">Sign In</span>
+        </button>
+
+        <a href="#android-info" class="hidden xl:inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow">
+          <i class="fa-brands fa-android text-sm"></i>
+          <span>Android App</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-white border-b border-slate-200 shadow-sm sticky top-16 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto text-sm font-medium">
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3.5 border-b-2 border-indigo-600 text-indigo-600 flex items-center space-x-2 whitespace-nowrap font-semibold">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Executive / CEO</span>
+      </button>
+      <button onclick="switchTab('departments')" id="tab-departments" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-network-wired"></i>
+        <span>Department Dashboards</span>
+      </button>
+      <button onclick="switchTab('production')" id="tab-production" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-gears"></i>
+        <span>Daily Production</span>
+      </button>
+      <button onclick="switchTab('rejection')" id="tab-rejection" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Rejection & Quality</span>
+      </button>
+      <button onclick="switchTab('planning')" id="tab-planning" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>Planning (Separate)</span>
+      </button>
+      <button onclick="switchTab('stock')" id="tab-stock" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-warehouse"></i>
+        <span>Stock Reconciliation</span>
+      </button>
+      <button onclick="switchTab('actions')" id="tab-actions" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Action Tracker</span>
+      </button>
+      <button onclick="switchTab('alerts')" id="tab-alerts" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-bell"></i>
+        <span>Alerts Engine</span>
+        <span id="alertsCountBadge" class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full ml-1">0</span>
+      </button>
+      <button onclick="switchTab('executive')" id="tab-executive" class="py-3.5 border-b-2 border-transparent text-slate-600 hover:text-indigo-600 flex items-center space-x-2 whitespace-nowrap">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>Executive Meeting Pack</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- COMMON FILTER BAR -->
+  <div id="commonFilterBar" class="bg-slate-100/80 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Date Range -->
+        <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-300 shadow-sm">
+          <span class="text-slate-500 font-semibold">From:</span>
+          <input type="date" id="filterFromDate" onchange="applyFilters()" class="text-slate-800 font-medium focus:outline-none text-xs">
+          <span class="text-slate-400">|</span>
+          <span class="text-slate-500 font-semibold">To:</span>
+          <input type="date" id="filterToDate" onchange="applyFilters()" class="text-slate-800 font-medium focus:outline-none text-xs">
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="flex items-center space-x-1">
+          <button onclick="setDatePreset('today')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-slate-300 rounded text-slate-700 font-medium transition">Today</button>
+          <button onclick="setDatePreset('yesterday')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-slate-300 rounded text-slate-700 font-medium transition">Yesterday</button>
+          <button onclick="setDatePreset('month')" class="px-2 py-1 bg-white hover:bg-slate-200 border border-slate-300 rounded text-slate-700 font-medium transition">30 Days</button>
+        </div>
+
+        <!-- Model Filter -->
+        <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-300 shadow-sm">
+          <span class="text-slate-500 font-semibold">Model:</span>
+          <select id="filterModel" onchange="applyFilters()" class="text-slate-800 font-medium focus:outline-none text-xs bg-transparent cursor-pointer">
+            <option value="ALL">ALL (Filter-only)</option>
+            <option value="U86">U86</option>
+            <option value="U180">U180</option>
+            <option value="U244">U244</option>
+            <option value="MAXR">MAXR</option>
+            <option value="N282-DISC">N282-DISC</option>
+            <option value="DRUM">DRUM</option>
+            <option value="N360">N360</option>
+          </select>
+        </div>
+
+        <!-- Department Filter -->
+        <div class="flex items-center space-x-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-300 shadow-sm">
+          <span class="text-slate-500 font-semibold">Dept:</span>
+          <select id="filterDepartment" onchange="applyFilters()" class="text-slate-800 font-medium focus:outline-none text-xs bg-transparent cursor-pointer">
+            <option value="ALL">ALL (Filter-only)</option>
+            <option value="CASTING">1. CASTING</option>
+            <option value="POST_CASTING">2. POST CASTING</option>
+            <option value="M_C">3. M/C</option>
+            <option value="BUFFING">4. BUFFING</option>
+            <option value="FINAL">5. FINAL</option>
+            <option value="KAMAL_OK">6. KAMAL OK</option>
+            <option value="GIL_DELIVERY">7. GIL DELIVERY</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Refresh & Filter Invariant badge -->
+      <div class="flex items-center space-x-2">
+        <span class="text-slate-500 hidden lg:inline">Invariant: 'ALL' is filter-only, never persisted. 0 ≠ NO DATA.</span>
+        <button onclick="refreshData()" class="p-1.5 text-indigo-600 hover:text-indigo-800 bg-white border border-slate-300 rounded-lg shadow-sm" title="Refresh Live Data">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- TAB 1: EXECUTIVE / CEO DASHBOARD -->
+    <div id="content-dashboard" class="space-y-6">
+      
+      <!-- Canonical Manufacturing Flow Visualization -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
+        <div class="flex items-center justify-between text-xs font-semibold text-slate-700 border-b border-slate-100 pb-2">
+          <span class="flex items-center space-x-1.5 text-indigo-900">
+            <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+            <span>Canonical Production Flow (7 Sequential Departments)</span>
+          </span>
+          <span class="text-slate-500 font-mono text-[11px]">Strict Sequencing</span>
+        </div>
+        <div id="flowStepsContainer" class="flex items-center space-x-2 overflow-x-auto py-1 text-xs font-medium text-slate-600">
+          <!-- Dynamically populated from live data -->
+        </div>
+      </div>
+
+      <!-- LIVE KPI CARDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Total Production -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
+            <span>Total Production</span>
+            <i class="fa-solid fa-cubes-stacked text-indigo-500 text-base"></i>
+          </div>
+          <div id="kpi-production" class="text-3xl font-extrabold text-slate-900 mt-2">--</div>
+          <div class="text-xs text-slate-500 mt-1" id="kpi-prod-sub">Live Firestore records</div>
+        </div>
+
+        <!-- Plan vs Actual & Achievement -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
+            <span>Plan Achievement</span>
+            <i class="fa-solid fa-gauge-high text-blue-500 text-base"></i>
+          </div>
+          <div id="kpi-achievement" class="text-3xl font-extrabold text-slate-900 mt-2">--</div>
+          <div class="text-xs text-slate-500 mt-1" id="kpi-plan-sub">Plan: -- | Actual: --</div>
+        </div>
+
+        <!-- Total Rejection & Rejection % -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
+            <span>Rejection Rate</span>
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 text-base"></i>
+          </div>
+          <div id="kpi-rejection-pct" class="text-3xl font-extrabold text-slate-900 mt-2">--</div>
+          <div class="text-xs text-slate-500 mt-1" id="kpi-rej-sub">Total Rejected: --</div>
+        </div>
+
+        <!-- Stock Variance & Active Alerts -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider">
+            <span>Stock & Alerts</span>
+            <i class="fa-solid fa-bell text-rose-500 text-base"></i>
+          </div>
+          <div class="flex items-baseline space-x-2 mt-2">
+            <span id="kpi-stock-var" class="text-2xl font-extrabold text-slate-800">Var: --</span>
+            <span id="kpi-active-alerts" class="text-sm font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">0 Alerts</span>
+          </div>
+          <div class="text-xs text-slate-500 mt-1">Manual audit reconciled</div>
+        </div>
+      </div>
+
+      <!-- CHARTS / DATA GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Production Trend by Date -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+              <i class="fa-solid fa-chart-line text-indigo-600"></i>
+              <span>Production Trend (Chrono Sequence)</span>
+            </h3>
+            <span class="text-xs text-slate-500">Live Date Points</span>
+          </div>
+          <div id="prodTrendTableContainer" class="overflow-x-auto max-h-64">
+            <!-- Rendered by analytics -->
+          </div>
+        </div>
+
+        <!-- Rejection Trend by Date -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center space-x-1.5">
+              <i class="fa-solid fa-chart-area text-rose-600"></i>
+              <span>Rejection Trend</span>
+            </h3>
+            <span class="text-xs text-slate-500">By Date</span>
+          </div>
+          <div id="rejTrendTableContainer" class="overflow-x-auto max-h-64">
+            <!-- Rendered by analytics -->
+          </div>
+        </div>
+      </div>
+
+      <!-- MODEL-WISE & DEPARTMENT-WISE TABLES -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Model Analysis -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-sm">Model-wise Output & Rejection</h3>
+            <span class="text-xs text-slate-500">All 7 Models</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                <tr>
+                  <th class="px-3 py-2">Model</th>
+                  <th class="px-3 py-2">Production</th>
+                  <th class="px-3 py-2">Rejection</th>
+                  <th class="px-3 py-2">Applicability</th>
+                </tr>
+              </thead>
+              <tbody id="modelWiseTableBody" class="divide-y divide-slate-100">
+                <!-- Live populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Department Analysis -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-sm">Department Performance Summary</h3>
+            <span class="text-xs text-slate-500">7 Departments</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                <tr>
+                  <th class="px-3 py-2">Step</th>
+                  <th class="px-3 py-2">Department</th>
+                  <th class="px-3 py-2">Production</th>
+                  <th class="px-3 py-2">Rejection</th>
+                </tr>
+              </thead>
+              <tbody id="deptWiseTableBody" class="divide-y divide-slate-100">
+                <!-- Live populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: SEPARATE DEPARTMENT DASHBOARDS -->
+    <div id="content-departments" class="hidden space-y-6">
+      <!-- Department Selector Pills -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-2 text-xs">
+        <span class="font-bold text-slate-700 mr-2">Select Department Dashboard:</span>
+        <button onclick="selectDepartmentView('CASTING')" id="dept-btn-CASTING" class="px-3 py-1.5 rounded-lg border font-semibold bg-indigo-600 text-white border-indigo-600 shadow-sm">1. CASTING</button>
+        <button onclick="selectDepartmentView('POST_CASTING')" id="dept-btn-POST_CASTING" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-slate-700 border-slate-200">2. POST CASTING</button>
+        <button onclick="selectDepartmentView('M_C')" id="dept-btn-M_C" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-slate-700 border-slate-200">3. M/C</button>
+        <button onclick="selectDepartmentView('BUFFING')" id="dept-btn-BUFFING" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-slate-700 border-slate-200">4. BUFFING</button>
+        <button onclick="selectDepartmentView('FINAL')" id="dept-btn-FINAL" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-slate-700 border-slate-200">5. FINAL</button>
+        <button onclick="selectDepartmentView('KAMAL_OK')" id="dept-btn-KAMAL_OK" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-slate-700 border-slate-200">6. KAMAL OK</button>
+        <button onclick="selectDepartmentView('KAMAL_REJECTION')" id="dept-btn-KAMAL_REJECTION" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-rose-700 border-rose-200">7. KAMAL REJECTION</button>
+        <button onclick="selectDepartmentView('GIL_DELIVERY')" id="dept-btn-GIL_DELIVERY" class="px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-blue-700 border-blue-200">8. GIL DELIVERY</button>
+      </div>
+
+      <!-- Active Department Content Container -->
+      <div id="departmentDashboardContainer" class="space-y-6">
+        <!-- Rendered dynamically for selected department -->
+      </div>
+    </div>
+
+    <!-- TAB 3: DAILY PRODUCTION -->
+    <div id="content-production" class="hidden space-y-6">
+      <!-- Production Entry Form -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Record Daily Shift Production</h2>
+            <p class="text-xs text-slate-500">Invariants: No LH/RH in production; U180 & MAXR apply to GIL DELIVERY only; 'ALL' is never persisted.</p>
+          </div>
+          <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-md border border-indigo-200">Firestore Authoritative Sync</span>
+        </div>
+
+        <div id="prodRbacWarning" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+          <i class="fa-solid fa-lock mr-1"></i> Current Role (<strong id="prodRbacRoleLabel">CEO</strong>) is read-only. Switch role to submit.
+        </div>
+
+        <div id="prodApplicabilityWarning" class="hidden p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800">
+          <i class="fa-solid fa-triangle-exclamation mr-1"></i> Model restriction: <strong id="warnProdModel">U180</strong> is restricted to <strong>GIL DELIVERY</strong> only.
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Date</label>
+            <input type="date" id="prodEntryDate" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Manufacturing Model</label>
+            <select id="prodEntryModel" onchange="validateProdFormApplicability()" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="U86">U86</option>
+              <option value="U180">U180 (GIL DELIVERY only)</option>
+              <option value="U244">U244</option>
+              <option value="MAXR">MAXR (GIL DELIVERY only)</option>
+              <option value="N282-DISC">N282-DISC</option>
+              <option value="DRUM">DRUM</option>
+              <option value="N360">N360</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Department</label>
+            <select id="prodEntryDept" onchange="validateProdFormApplicability()" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="CASTING">1. CASTING</option>
+              <option value="POST_CASTING">2. POST CASTING</option>
+              <option value="M_C">3. M/C</option>
+              <option value="BUFFING">4. BUFFING</option>
+              <option value="FINAL">5. FINAL</option>
+              <option value="KAMAL_OK">6. KAMAL OK</option>
+              <option value="GIL_DELIVERY">7. GIL DELIVERY</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Shift</label>
+            <select id="prodEntryShift" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+              <option value="SHIFT_1">Shift 1 (06:00 - 14:00)</option>
+              <option value="SHIFT_2">Shift 2 (14:00 - 22:00)</option>
+              <option value="SHIFT_3">Shift 3 (22:00 - 06:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Produced Units (Strictly NO LH/RH)</label>
+            <input type="number" id="prodEntryUnits" min="0" placeholder="e.g. 500" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Operator / Supervisor ID</label>
+            <input type="text" id="prodEntryOperator" placeholder="e.g. OP-104" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Downtime Minutes</label>
+            <input type="number" id="prodEntryDowntime" min="0" value="0" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <span class="text-slate-400 text-xs italic">Production record will be committed to <code>production_records</code> collection.</span>
+          <button id="prodSubmitBtn" onclick="submitProduction()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow transition">
+            Submit Production Entry
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Production History Table -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 class="font-bold text-slate-900 text-sm">Recent Stored Production Records</h3>
+          <span class="text-xs text-slate-500" id="prodRecordCountLabel">0 records loaded</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+              <tr>
+                <th class="px-3 py-2">Date</th>
+                <th class="px-3 py-2">Model</th>
+                <th class="px-3 py-2">Department</th>
+                <th class="px-3 py-2">Shift</th>
+                <th class="px-3 py-2">Quantity</th>
+                <th class="px-3 py-2">Operator</th>
+                <th class="px-3 py-2">Created By</th>
+              </tr>
+            </thead>
+            <tbody id="prodHistoryTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: REJECTION & QUALITY -->
+    <div id="content-rejection" class="hidden space-y-6">
+      <!-- Rejection Entry Form -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Record Quality Rejection</h2>
+            <p class="text-xs text-slate-500">Invariants: Side is strictly LH or RH (BOTH invalid); Rebuffing applies to KAMAL source only; Standard DefectMaster categories.</p>
+          </div>
+          <span class="text-xs font-semibold bg-rose-50 text-rose-700 px-3 py-1 rounded-md border border-rose-200">ISO 9001 Audited</span>
+        </div>
+
+        <div id="rejRbacWarning" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+          <i class="fa-solid fa-lock mr-1"></i> Current Role is read-only.
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Date</label>
+            <input type="date" id="rejEntryDate" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Manufacturing Model</label>
+            <select id="rejEntryModel" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="U86">U86</option>
+              <option value="U180">U180 (GIL DELIVERY only)</option>
+              <option value="U244">U244</option>
+              <option value="MAXR">MAXR (GIL DELIVERY only)</option>
+              <option value="N282-DISC">N282-DISC</option>
+              <option value="DRUM">DRUM</option>
+              <option value="N360">N360</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Department</label>
+            <select id="rejEntryDept" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="CASTING">1. CASTING</option>
+              <option value="POST_CASTING">2. POST CASTING</option>
+              <option value="M_C">3. M/C</option>
+              <option value="BUFFING">4. BUFFING</option>
+              <option value="FINAL">5. FINAL</option>
+              <option value="KAMAL_OK">6. KAMAL OK</option>
+              <option value="GIL_DELIVERY">7. GIL DELIVERY</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Defect Category</label>
+            <select id="rejEntryDefect" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="POROSITY">POROSITY</option>
+              <option value="BLOWHOLE">BLOWHOLE</option>
+              <option value="CRACK">CRACK</option>
+              <option value="DENT">DENT</option>
+              <option value="PIN HOLE">PIN HOLE</option>
+              <option value="SLAG INCLUSION">SLAG INCLUSION</option>
+              <option value="SHRINKAGE">SHRINKAGE</option>
+              <option value="UNDER FILL">UNDER FILL</option>
+              <option value="MACHINING DAMAGE">MACHINING DAMAGE</option>
+              <option value="ROUGH BUFFING">ROUGH BUFFING</option>
+              <option value="BEND">BEND</option>
+              <option value="OTHER">OTHER</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs pt-1">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Rejection Source</label>
+            <select id="rejEntrySource" onchange="validateRebuffingEligibility()" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="KAMAL">KAMAL</option>
+              <option value="MRN">MRN</option>
+              <option value="DSPL">DSPL</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Business Area</label>
+            <select id="rejEntryArea" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="KAMAL">KAMAL</option>
+              <option value="GABRIEL">GABRIEL</option>
+              <option value="DSPL">DSPL</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Side (Strictly LH or RH)</label>
+            <select id="rejEntrySide" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+              <option value="LH">LH</option>
+              <option value="RH">RH</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Rejected Units</label>
+            <input type="number" id="rejEntryUnits" min="1" placeholder="e.g. 12" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+          </div>
+        </div>
+
+        <!-- Rebuffing Option -->
+        <div class="flex items-center space-x-2 pt-2">
+          <input type="checkbox" id="rejEntryIsRebuffed" class="rounded text-indigo-600 focus:ring-indigo-500">
+          <label for="rejEntryIsRebuffed" class="text-xs font-medium text-slate-700">
+            Rebuffing Eligible (<span id="rebuffingRuleNotice" class="text-emerald-700">Valid: Source is KAMAL</span>)
+          </label>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <span class="text-slate-400 text-xs italic">Record committed to <code>rejection_records</code> collection.</span>
+          <button id="rejSubmitBtn" onclick="submitRejection()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow transition">
+            Submit Rejection Entry
+          </button>
+        </div>
+      </div>
+
+      <!-- Defect Pareto Analysis & Breakdown -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Pareto Table -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-sm">Defect Pareto Analysis (80/20 Rule)</h3>
+            <span class="text-xs text-slate-500" id="paretoTotalLabel">Live Rejection Pareto</span>
+          </div>
+          <div class="overflow-x-auto max-h-72">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                <tr>
+                  <th class="px-3 py-2">Defect</th>
+                  <th class="px-3 py-2">Count</th>
+                  <th class="px-3 py-2">%</th>
+                  <th class="px-3 py-2">Cum %</th>
+                </tr>
+              </thead>
+              <tbody id="paretoTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Breakdown: Source, Area, Side -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-slate-900 text-sm">Quality Breakdown by Dimensional Vectors</h3>
+            <span class="text-xs text-slate-500">Live Breakdown</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="font-bold text-slate-700 mb-1">Rejection by Side (LH vs RH):</div>
+              <div class="grid grid-cols-2 gap-3" id="sideBreakdownContainer">
+                <!-- Live -->
+              </div>
+            </div>
+
+            <div>
+              <div class="font-bold text-slate-700 mb-1">Rejection by Source (KAMAL, MRN, DSPL):</div>
+              <div class="grid grid-cols-3 gap-2" id="sourceBreakdownContainer">
+                <!-- Live -->
+              </div>
+            </div>
+
+            <div>
+              <div class="font-bold text-slate-700 mb-1">Rebuffing Analysis (KAMAL Rebuffed):</div>
+              <div id="rebuffingAnalysisContainer" class="p-3 bg-purple-50 border border-purple-200 rounded-lg text-purple-900 text-xs">
+                <!-- Live -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: PLANNING (SEPARATE) -->
+    <div id="content-planning" class="hidden space-y-6">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-xs text-indigo-900 flex items-start space-x-3">
+        <i class="fa-solid fa-circle-info text-indigo-600 text-base mt-0.5"></i>
+        <div>
+          <span class="font-bold">Strict Planning Domain Separation Invariant:</span>
+          <p class="mt-0.5">Customer End Plan, Monthly Department Plan, Daily Department Plan, Actual Production, and GIL Delivery are strictly independent collections and metrics. They are never conflated into an artificial combined number.</p>
+        </div>
+      </div>
+
+      <!-- Add Daily Plan Form -->
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="font-bold text-slate-900 text-sm">Create Daily Department Plan Target</h3>
+          <span class="text-xs text-slate-500">Committed to <code>dailyPlans</code> collection</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Plan Date</label>
+            <input type="date" id="planEntryDate" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Model</label>
+            <select id="planEntryModel" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+              <option value="U86">U86</option>
+              <option value="U180">U180 (GIL DELIVERY only)</option>
+              <option value="U244">U244</option>
+              <option value="MAXR">MAXR (GIL DELIVERY only)</option>
+              <option value="N282-DISC">N282-DISC</option>
+              <option value="DRUM">DRUM</option>
+              <option value="N360">N360</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Department</label>
+            <select id="planEntryDept" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+              <option value="CASTING">1. CASTING</option>
+              <option value="POST_CASTING">2. POST CASTING</option>
+              <option value="M_C">3. M/C</option>
+              <option value="BUFFING">4. BUFFING</option>
+              <option value="FINAL">5. FINAL</option>
+              <option value="KAMAL_OK">6. KAMAL OK</option>
+              <option value="GIL_DELIVERY">7. GIL DELIVERY</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Planned Target Units</label>
+            <input type="number" id="planEntryUnits" min="1" placeholder="e.g. 2000" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button onclick="submitDailyPlan()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-lg shadow">
+            Save Daily Target
+          </button>
+        </div>
+      </div>
+
+      <!-- Plan vs Actual Live Comparison Grid -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 class="font-bold text-slate-900 text-sm">Separated Plans vs Actual Comparison</h3>
+          <span class="text-xs text-slate-500">Live Matching</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+              <tr>
+                <th class="px-3 py-2">Date</th>
+                <th class="px-3 py-2">Customer End Plan</th>
+                <th class="px-3 py-2">Monthly Dept Plan</th>
+                <th class="px-3 py-2">Daily Target</th>
+                <th class="px-3 py-2">Actual Production</th>
+                <th class="px-3 py-2">GIL Delivery</th>
+                <th class="px-3 py-2">Achievement %</th>
+              </tr>
+            </thead>
+            <tbody id="plansTableBody" class="divide-y divide-slate-100">
+              <!-- Live populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: STOCK RECONCILIATION -->
+    <div id="content-stock" class="hidden space-y-6">
+      <!-- Stock Audit Entry Form -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Manual Stock Count & Reconciliation</h2>
+            <p class="text-xs text-slate-500">Invariants: Opening and Closing are entered manually without automated derivation. Never derive opening from yesterday's closing.</p>
+          </div>
+          <span class="text-xs font-semibold bg-amber-50 text-amber-800 px-3 py-1 rounded-md border border-amber-200">Manual Variance Audit</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Audit Date</label>
+            <input type="date" id="stockEntryDate" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Model (Physical Count)</label>
+            <select id="stockEntryModel" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-medium">
+              <option value="U86">U86</option>
+              <option value="U180">U180</option>
+              <option value="U244">U244</option>
+              <option value="MAXR">MAXR</option>
+              <option value="N282-DISC">N282-DISC</option>
+              <option value="DRUM">DRUM</option>
+              <option value="N360">N360</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Opening Stock (Manually Counted)</label>
+            <input type="number" id="stockEntryOpening" min="0" placeholder="e.g. 10000" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-1">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Received / Produced</label>
+            <input type="number" id="stockEntryReceived" min="0" value="0" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Consumed / Dispatched</label>
+            <input type="number" id="stockEntryConsumed" min="0" value="0" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Closing Stock (Manually Counted)</label>
+            <input type="number" id="stockEntryClosing" min="0" placeholder="e.g. 9800" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-2">
+          <span class="text-slate-400 text-xs italic">Variance = Closing - (Opening + Received - Consumed). Record committed to <code>stock_records</code>.</span>
+          <button onclick="submitStockAudit()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow transition">
+            Save Stock Reconciliation Record
+          </button>
+        </div>
+      </div>
+
+      <!-- Stock Reconciliation Table -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 class="font-bold text-slate-900 text-sm">Stock Audit History & Variance Log</h3>
+          <span class="text-xs text-slate-500">Live Synchronized</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+              <tr>
+                <th class="px-3 py-2">Date</th>
+                <th class="px-3 py-2">Model</th>
+                <th class="px-3 py-2">Opening (Counted)</th>
+                <th class="px-3 py-2">Received</th>
+                <th class="px-3 py-2">Consumed</th>
+                <th class="px-3 py-2">Closing (Counted)</th>
+                <th class="px-3 py-2">Variance</th>
+                <th class="px-3 py-2">Audited By</th>
+              </tr>
+            </thead>
+            <tbody id="stockTableBody" class="divide-y divide-slate-100">
+              <!-- Live populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: ACTION TRACKER -->
+    <div id="content-actions" class="hidden space-y-6">
+      <!-- Create Action Form -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Manufacturing Action Tracker</h2>
+            <p class="text-xs text-slate-500">Track corrective actions, maintenance orders, and quality investigations.</p>
+          </div>
+          <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-md border border-indigo-200">ISO CAPA Compliant</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Department</label>
+            <select id="actionEntryDept" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+              <option value="CASTING">CASTING</option>
+              <option value="POST_CASTING">POST CASTING</option>
+              <option value="M_C">M/C</option>
+              <option value="BUFFING">BUFFING</option>
+              <option value="FINAL">FINAL</option>
+              <option value="KAMAL_OK">KAMAL OK</option>
+              <option value="GIL_DELIVERY">GIL DELIVERY</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Priority</label>
+            <select id="actionEntryPriority" class="w-full border border-slate-300 rounded-lg p-2 text-xs font-semibold">
+              <option value="CRITICAL">CRITICAL</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM" selected>MEDIUM</option>
+              <option value="LOW">LOW</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Assigned Person / Engineer</label>
+            <input type="text" id="actionEntryAssignee" placeholder="e.g. Tool Room Eng" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Target Due Date</label>
+            <input type="date" id="actionEntryDueDate" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 text-xs">Action Description / Root Cause Details</label>
+          <input type="text" id="actionEntryDesc" placeholder="e.g. Die clearance inspection and carbide insert replacement for batch B-49" class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+        </div>
+
+        <div class="flex justify-end pt-2">
+          <button onclick="submitActionItem()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-5 py-2.5 rounded-lg shadow">
+            Create Action Item
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Action Items Table -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 class="font-bold text-slate-900 text-sm">Action Items List</h3>
+          <span class="text-xs text-slate-500" id="actionsCountLabel">0 actions loaded</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+              <tr>
+                <th class="px-3 py-2">ID / Date</th>
+                <th class="px-3 py-2">Department</th>
+                <th class="px-3 py-2">Priority</th>
+                <th class="px-3 py-2">Description</th>
+                <th class="px-3 py-2">Assignee</th>
+                <th class="px-3 py-2">Due Date</th>
+                <th class="px-3 py-2">Status</th>
+                <th class="px-3 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="actionsTableBody" class="divide-y divide-slate-100">
+              <!-- Live populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 8: ALERTS ENGINE -->
+    <div id="content-alerts" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Automated Alerts & Telemetry Triggers</h2>
+            <p class="text-xs text-slate-500">Live operational rules: Production below plan, rejection spikes (&gt;1.5%), stock variance conditions, and overdue actions.</p>
+          </div>
+          <span id="alertsSubHeaderBadge" class="text-xs font-semibold bg-rose-100 text-rose-800 px-3 py-1 rounded-md">Synced with alert_records</span>
+        </div>
+
+        <div id="alertsContainer" class="space-y-3">
+          <!-- Dynamically populated from Firestore alerts collection -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 9: EXECUTIVE MEETING PACK -->
+    <div id="content-executive" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Executive Meeting Pack Generator</h2>
+            <p class="text-xs text-slate-500">Board-level summary adhering strictly to Step 11 UAT format.</p>
+          </div>
+          <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2 rounded-lg flex items-center space-x-2 shadow">
+            <i class="fa-solid fa-print"></i>
+            <span>Export / Print Pack</span>
+          </button>
+        </div>
+
+        <!-- Meeting Pack Content Body -->
+        <div id="meetingPackBody" class="border border-slate-200 p-6 rounded-xl space-y-6 bg-slate-50/50">
+          <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-slate-900 text-base">Monthly Executive Operations Pack — Divine Stamp Pvt Ltd</div>
+              <div class="text-xs text-slate-500" id="packPeriodLabel">Period: Date Range Selected</div>
+            </div>
+            <span class="badge-ceo px-3 py-1 rounded-full text-xs font-bold">FACTUAL LIVE RECORD</span>
+          </div>
+
+          <!-- Top Level KPIs -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+              <div class="text-slate-500 font-medium">Total Volume Produced</div>
+              <div id="packVolume" class="text-xl font-bold text-slate-900 mt-1">--</div>
+              <div id="packVolumeSub" class="text-emerald-600 mt-0.5 font-medium">Plan Achievement: --</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+              <div class="text-slate-500 font-medium">First Pass Yield (FPY) / Rejection</div>
+              <div id="packFpy" class="text-xl font-bold text-slate-900 mt-1">--</div>
+              <div id="packFpySub" class="text-slate-500 mt-0.5">Rejection Rate: --</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+              <div class="text-slate-500 font-medium">Stock Variance Rate</div>
+              <div id="packStockVar" class="text-xl font-bold text-slate-900 mt-1">--</div>
+              <div class="text-slate-500 mt-0.5">Manual Audit Reconciled</div>
+            </div>
+          </div>
+
+          <!-- Department Flow Breakdown -->
+          <div class="bg-white p-4 rounded-lg border border-slate-200 space-y-2">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Departmental Output & Defect Matrix</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                  <tr>
+                    <th class="px-3 py-2">Department</th>
+                    <th class="px-3 py-2">Production</th>
+                    <th class="px-3 py-2">Rejection</th>
+                    <th class="px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="packDeptTableBody" class="divide-y divide-slate-100">
+                  <!-- Live -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CAPA Actions Summary -->
+          <div class="bg-white p-4 rounded-lg border border-slate-200 space-y-2">
+            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Corrective Actions & Quality Status</h4>
+            <div id="packActionSummaryContainer" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <!-- Live -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANDROID APPLICATION DOWNLOAD & ACCESS SECTION -->
+    <div id="android-info" class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-3">
+          <div class="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-500/30">
+            <i class="fa-brands fa-android"></i>
+            <span>Companion Native Android App</span>
+          </div>
+          <h2 class="text-2xl font-extrabold tracking-tight">Divine MIS for Android</h2>
+          <p class="text-slate-300 text-sm max-w-xl">
+            The full-featured native Android app with offline-first Room database, Firestore real-time sync, and shopfloor barcode/entry scanning is compiled and ready.
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3">
+          <div class="bg-white/10 backdrop-blur px-4 py-3 rounded-xl border border-white/10 text-xs space-y-1">
+            <div class="text-slate-400">Application Package:</div>
+            <div class="font-mono text-emerald-400 font-semibold">com.aistudio.divinemis.qkrpxn</div>
+            <div class="text-slate-400 text-[11px]">Android SDK 36 • Target: 100% Tests Pass</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 space-y-1">
+      <div>Divine MIS © 2026 Divine Stamp Pvt Ltd. All rights reserved.</div>
+      <div>Authoritative Backend: Firebase Authentication & Cloud Firestore • Invariants: Strict RBAC, Filter-only ALL, 0 ≠ NO DATA</div>
+    </div>
+  </footer>
+
+  <!-- AUTHENTICATION MODAL -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-slate-900 text-base flex items-center space-x-2">
+          <i class="fa-solid fa-lock text-indigo-600"></i>
+          <span>Divine MIS — Firebase Authentication</span>
+        </h3>
+        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-slate-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="text-xs text-slate-500">
+        Enter authorized Divine Stamp credentials or authenticate as an executive session.
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+          <input type="email" id="authEmail" placeholder="user@divinestamp.com" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+          <input type="password" id="authPassword" placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+        <div id="authErrorMsg" class="hidden text-xs text-rose-600 font-medium p-2 bg-rose-50 rounded border border-rose-200"></div>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-2">
+        <button onclick="closeAuthModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button onclick="handleSignInSubmit()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT MODULE -->
+  <script type="module">
+    import { app, auth, db, getActiveFirebaseConfig } from "./firebase-config.js";
+    import { 
+      webDataAccess, 
+      UserRole, 
+      RoleCapabilities, 
+      MetricValue, 
+      ModelApplicabilityValidator,
+      ManufacturingModel,
+      Department,
+      CANONICAL_DEPARTMENTS,
+      ManufacturingFlow,
+      RejectionSource,
+      BusinessArea,
+      RejectionSide,
+      RebuffingRule
+    } from "./data-access.js";
+    import { webAuth } from "./auth.js";
+    import { analyticsEngine, AnalyticsFilter } from "./analytics-engine.js";
+
+    // Bind window functions
+    window.switchTab = switchTab;
+    window.openAuthModal = openAuthModal;
+    window.closeAuthModal = closeAuthModal;
+    window.handleSignInSubmit = handleSignInSubmit;
+    window.applyFilters = applyFilters;
+    window.setDatePreset = setDatePreset;
+    window.refreshData = refreshData;
+    window.selectDepartmentView = selectDepartmentView;
+    window.validateProdFormApplicability = validateProdFormApplicability;
+    window.validateRebuffingEligibility = validateRebuffingEligibility;
+    window.submitProduction = submitProduction;
+    window.submitRejection = submitRejection;
+    window.submitDailyPlan = submitDailyPlan;
+    window.submitStockAudit = submitStockAudit;
+    window.submitActionItem = submitActionItem;
+    window.updateActionStatus = updateActionStatus;
+    window.resolveAlert = resolveAlert;
+
+    // Active state
+    let activeDeptView = "CASTING";
+    let currentFilter = new AnalyticsFilter({
+      fromDate: getPastDate(30),
+      toDate: getTodayDate(),
+      model: "ALL",
+      department: "ALL"
+    });
+
+    // Initialize Default Dates in UI
+    document.getElementById("filterFromDate").value = currentFilter.fromDate;
+    document.getElementById("filterToDate").value = currentFilter.toDate;
+    document.getElementById("prodEntryDate").value = getTodayDate();
+    document.getElementById("rejEntryDate").value = getTodayDate();
+    document.getElementById("planEntryDate").value = getTodayDate();
+    document.getElementById("stockEntryDate").value = getTodayDate();
+    document.getElementById("actionEntryDueDate").value = getFutureDate(7);
+
+    // Subscribe to Auth State
+    webAuth.subscribe((state) => {
+      updateAuthUI(state);
+    });
+
+    // Role selector listener
+    document.getElementById("roleSelector").addEventListener("change", (e) => {
+      webAuth.setRoleOverride(e.target.value);
+    });
+
+    // Subscribe to DataAccess State Cache
+    webDataAccess.subscribeState((state) => {
+      renderAllViews(state);
+    });
+
+    function getTodayDate() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function getPastDate(days) {
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      return d.toISOString().split("T")[0];
+    }
+
+    function getFutureDate(days) {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split("T")[0];
+    }
+
+    function setDatePreset(preset) {
+      if (preset === "today") {
+        currentFilter.fromDate = getTodayDate();
+        currentFilter.toDate = getTodayDate();
+      } else if (preset === "yesterday") {
+        currentFilter.fromDate = getPastDate(1);
+        currentFilter.toDate = getPastDate(1);
+      } else if (preset === "month") {
+        currentFilter.fromDate = getPastDate(30);
+        currentFilter.toDate = getTodayDate();
+      }
+      document.getElementById("filterFromDate").value = currentFilter.fromDate;
+      document.getElementById("filterToDate").value = currentFilter.toDate;
+      applyFilters();
+    }
+
+    function applyFilters() {
+      currentFilter.fromDate = document.getElementById("filterFromDate").value;
+      currentFilter.toDate = document.getElementById("filterToDate").value;
+      currentFilter.model = document.getElementById("filterModel").value;
+      currentFilter.department = document.getElementById("filterDepartment").value;
+      renderAllViews(webDataAccess.state);
+    }
+
+    function refreshData() {
+      renderAllViews(webDataAccess.state);
+    }
+
+    function updateAuthUI(state) {
+      const role = state.role || UserRole.CEO;
+      document.getElementById("roleSelector").value = role;
+
+      const badge = document.getElementById("roleBadge");
+      if (badge) {
+        badge.textContent = role;
+        badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ";
+        if (role === UserRole.CEO) badge.className += "badge-ceo";
+        else if (role === UserRole.ADMIN) badge.className += "badge-admin";
+        else if (role === UserRole.MANAGER) badge.className += "badge-manager";
+        else if (role === UserRole.SUPERVISOR) badge.className += "badge-supervisor";
+      }
+
+      const authBtnText = document.getElementById("authBtnText");
+      if (authBtnText) {
+        authBtnText.textContent = state.user ? "Sign Out" : "Sign In";
+      }
+
+      // Check RBAC permissions for production write
+      const canWriteProd = RoleCapabilities[role]?.canWriteProduction ?? false;
+      const prodWarning = document.getElementById("prodRbacWarning");
+      const prodBtn = document.getElementById("prodSubmitBtn");
+      const prodRoleLabel = document.getElementById("prodRbacRoleLabel");
+      if (prodRoleLabel) prodRoleLabel.textContent = role;
+
+      if (!canWriteProd) {
+        if (prodWarning) prodWarning.classList.remove("hidden");
+        if (prodBtn) {
+          prodBtn.disabled = true;
+          prodBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+      } else {
+        if (prodWarning) prodWarning.classList.add("hidden");
+        if (prodBtn) {
+          prodBtn.disabled = false;
+          prodBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      }
+
+      // Check RBAC for Rejection
+      const canWriteRej = RoleCapabilities[role]?.canWriteRejection ?? false;
+      const rejWarning = document.getElementById("rejRbacWarning");
+      const rejBtn = document.getElementById("rejSubmitBtn");
+      if (!canWriteRej) {
+        if (rejWarning) rejWarning.classList.remove("hidden");
+        if (rejBtn) {
+          rejBtn.disabled = true;
+          rejBtn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+      } else {
+        if (rejWarning) rejWarning.classList.add("hidden");
+        if (rejBtn) {
+          rejBtn.disabled = false;
+          rejBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      const tabs = ['dashboard', 'departments', 'production', 'rejection', 'planning', 'stock', 'actions', 'alerts', 'executive'];
+      tabs.forEach(id => {
+        const content = document.getElementById('content-' + id);
+        const button = document.getElementById('tab-' + id);
+        if (content && button) {
+          if (id === tabId) {
+            content.classList.remove('hidden');
+            button.classList.add('border-indigo-600', 'text-indigo-600', 'font-semibold');
+            button.classList.remove('border-transparent', 'text-slate-600');
+          } else {
+            content.classList.add('hidden');
+            button.classList.remove('border-indigo-600', 'text-indigo-600', 'font-semibold');
+            button.classList.add('border-transparent', 'text-slate-600');
+          }
+        }
+      });
+      if (tabId === "departments") {
+        renderDepartmentDashboard(webDataAccess.state);
+      }
+    }
+
+    function selectDepartmentView(deptCode) {
+      activeDeptView = deptCode;
+      const allDepts = ['CASTING', 'POST_CASTING', 'M_C', 'BUFFING', 'FINAL', 'KAMAL_OK', 'KAMAL_REJECTION', 'GIL_DELIVERY'];
+      allDepts.forEach(d => {
+        const btn = document.getElementById(`dept-btn-${d}`);
+        if (btn) {
+          if (d === deptCode) {
+            btn.className = "px-3 py-1.5 rounded-lg border font-semibold bg-indigo-600 text-white border-indigo-600 shadow-sm";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-lg border font-semibold bg-slate-100 text-slate-700 border-slate-200";
+          }
+        }
+      });
+      renderDepartmentDashboard(webDataAccess.state);
+    }
+
+    function validateProdFormApplicability() {
+      const model = document.getElementById("prodEntryModel").value;
+      const dept = document.getElementById("prodEntryDept").value;
+      const isApplicable = ModelApplicabilityValidator.isApplicable(model, dept);
+      const warnBox = document.getElementById("prodApplicabilityWarning");
+      const btn = document.getElementById("prodSubmitBtn");
+
+      if (!isApplicable) {
+        if (warnBox) {
+          document.getElementById("warnProdModel").textContent = model;
+          warnBox.classList.remove("hidden");
+        }
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add("opacity-50", "cursor-not-allowed");
+        }
+      } else {
+        if (warnBox) warnBox.classList.add("hidden");
+        const role = webAuth.currentRole || UserRole.CEO;
+        if (RoleCapabilities[role]?.canWriteProduction && btn) {
+          btn.disabled = false;
+          btn.classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      }
+    }
+
+    function validateRebuffingEligibility() {
+      const source = document.getElementById("rejEntrySource").value;
+      const chk = document.getElementById("rejEntryIsRebuffed");
+      const notice = document.getElementById("rebuffingRuleNotice");
+
+      if (source !== RejectionSource.KAMAL) {
+        chk.checked = false;
+        chk.disabled = true;
+        notice.textContent = "Rebuffing is KAMAL source only!";
+        notice.className = "text-rose-600";
+      } else {
+        chk.disabled = false;
+        notice.textContent = "Valid: Source is KAMAL";
+        notice.className = "text-emerald-700";
+      }
+    }
+
+    /**
+     * RENDER ALL VIEWS
+     */
+    function renderAllViews(state) {
+      renderExecutiveDashboard(state);
+      renderDepartmentDashboard(state);
+      renderProductionHistory(state);
+      renderRejectionAnalysis(state);
+      renderPlanningView(state);
+      renderStockView(state);
+      renderActionsView(state);
+      renderAlertsView(state);
+      renderExecutivePack(state);
+    }
+
+    /**
+     * Executive Dashboard
+     */
+    function renderExecutiveDashboard(state) {
+      const summary = analyticsEngine.generateExecutiveSummary({
+        productions: state.productions,
+        plans: state.dailyPlans,
+        rejections: state.rejections,
+        stocks: state.stocks,
+        actions: state.actions,
+        alerts: state.alerts,
+        filter: currentFilter
+      });
+
+      // Update Top KPIs
+      const kpiProd = document.getElementById("kpi-production");
+      const kpiAch = document.getElementById("kpi-achievement");
+      const kpiPlanSub = document.getElementById("kpi-plan-sub");
+      const kpiRejPct = document.getElementById("kpi-rejection-pct");
+      const kpiRejSub = document.getElementById("kpi-rej-sub");
+      const kpiStockVar = document.getElementById("kpi-stock-var");
+      const kpiAlerts = document.getElementById("kpi-active-alerts");
+
+      if (kpiProd) kpiProd.textContent = MetricValue.format(summary.totalProduction, "pcs");
+      if (kpiAch) {
+        kpiAch.textContent = summary.achievementPercentage === MetricValue.NO_DATA
+          ? "NO DATA"
+          : `${summary.achievementPercentage.toFixed(1)}%`;
+      }
+      if (kpiPlanSub) {
+        kpiPlanSub.textContent = `Plan: ${MetricValue.format(summary.totalPlanned)} | Actual: ${MetricValue.format(summary.totalProduction)}`;
+      }
+      if (kpiRejPct) {
+        kpiRejPct.textContent = summary.rejectionPercentage === MetricValue.NO_DATA
+          ? "NO DATA"
+          : `${summary.rejectionPercentage.toFixed(2)}%`;
+      }
+      if (kpiRejSub) {
+        kpiRejSub.textContent = `Total Rejection: ${MetricValue.format(summary.totalRejection, "pcs")}`;
+      }
+      if (kpiStockVar) {
+        kpiStockVar.textContent = `Var: ${MetricValue.format(summary.stockVariance, "pcs")}`;
+      }
+      if (kpiAlerts) {
+        kpiAlerts.textContent = `${summary.activeAlertsCount} Alerts`;
+      }
+
+      // Render Canonical Flow Steps
+      const flowContainer = document.getElementById("flowStepsContainer");
+      if (flowContainer) {
+        const deptFlow = analyticsEngine.buildDepartmentWiseProduction(state.productions, currentFilter);
+        flowContainer.innerHTML = deptFlow.points.map((pt, idx) => `
+          <div class="flex items-center space-x-2">
+            <div class="px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-lg whitespace-nowrap">
+              <span class="font-bold text-indigo-900">${pt.sequence}. ${pt.department}:</span>
+              <span class="font-semibold text-slate-800 ml-1">${MetricValue.format(pt.quantity)}</span>
+            </div>
+            ${idx < deptFlow.points.length - 1 ? `<i class="fa-solid fa-arrow-right text-slate-300 text-[10px]"></i>` : ""}
+          </div>
+        `).join("");
+      }
+
+      // Render Daily Production Trend Table
+      const prodTrend = analyticsEngine.buildDailyProductionTrend(state.productions, currentFilter);
+      const prodTrendBox = document.getElementById("prodTrendTableContainer");
+      if (prodTrendBox) {
+        if (!prodTrend.hasData) {
+          prodTrendBox.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 no-data-tag rounded-lg">NO DATA available for selected date range and filter criteria.</div>`;
+        } else {
+          prodTrendBox.innerHTML = `
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                <tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Produced Volume</th></tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${prodTrend.points.map(p => `
+                  <tr>
+                    <td class="px-3 py-2 font-mono">${p.date}</td>
+                    <td class="px-3 py-2 font-semibold text-slate-800">${MetricValue.format(p.value, "pcs")}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+      }
+
+      // Render Rejection Trend Table
+      const rejTrend = analyticsEngine.buildRejectionTrend(state.rejections, currentFilter);
+      const rejTrendBox = document.getElementById("rejTrendTableContainer");
+      if (rejTrendBox) {
+        if (!rejTrend.hasData) {
+          rejTrendBox.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 no-data-tag rounded-lg">NO DATA available for selected criteria.</div>`;
+        } else {
+          rejTrendBox.innerHTML = `
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold">
+                <tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Rejection Units</th></tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${rejTrend.points.map(p => `
+                  <tr>
+                    <td class="px-3 py-2 font-mono">${p.date}</td>
+                    <td class="px-3 py-2 font-semibold text-rose-700">${MetricValue.format(p.value, "pcs")}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+      }
+
+      // Model-wise table
+      const modelProd = analyticsEngine.buildModelWiseProduction(state.productions, currentFilter);
+      const modelRej = analyticsEngine.buildRejectionByModel(state.rejections, currentFilter);
+      const modelTable = document.getElementById("modelWiseTableBody");
+      if (modelTable) {
+        modelTable.innerHTML = modelProd.points.map(mp => {
+          const mr = modelRej.points.find(r => r.model === mp.model);
+          const isGilOnly = mp.model === "U180" || mp.model === "MAXR";
+          return `
+            <tr>
+              <td class="px-3 py-2 font-bold text-slate-800">${mp.model}</td>
+              <td class="px-3 py-2 font-semibold text-slate-700">${MetricValue.format(mp.quantity, "pcs")}</td>
+              <td class="px-3 py-2 font-semibold text-rose-600">${MetricValue.format(mr ? mr.quantity : MetricValue.NO_DATA, "pcs")}</td>
+              <td class="px-3 py-2 text-[11px]">${isGilOnly ? '<span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">GIL DELIVERY ONLY</span>' : '<span class="text-slate-400">All Depts</span>'}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      // Dept-wise table
+      const deptProd = analyticsEngine.buildDepartmentWiseProduction(state.productions, currentFilter);
+      const deptRej = analyticsEngine.buildRejectionByDepartment(state.rejections, currentFilter);
+      const deptTable = document.getElementById("deptWiseTableBody");
+      if (deptTable) {
+        deptTable.innerHTML = deptProd.points.map(dp => {
+          const dr = deptRej.points.find(r => r.department === dp.department);
+          return `
+            <tr>
+              <td class="px-3 py-2 font-mono">${dp.sequence}</td>
+              <td class="px-3 py-2 font-bold text-slate-800">${dp.department}</td>
+              <td class="px-3 py-2 font-semibold text-slate-700">${MetricValue.format(dp.quantity, "pcs")}</td>
+              <td class="px-3 py-2 font-semibold text-rose-600">${MetricValue.format(dr ? dr.quantity : MetricValue.NO_DATA, "pcs")}</td>
+            </tr>
+          `;
+        }).join("");
+      }
+    }
+
+    /**
+     * Department Dashboard (Independent 8 Views)
+     */
+    function renderDepartmentDashboard(state) {
+      const container = document.getElementById("departmentDashboardContainer");
+      if (!container) return;
+
+      const deptCode = activeDeptView;
+      const deptFilter = new AnalyticsFilter({
+        ...currentFilter,
+        department: deptCode === "KAMAL_REJECTION" ? "KAMAL_OK" : deptCode
+      });
+
+      const prodData = analyticsEngine.filterProduction(state.productions, deptFilter);
+      const rejData = analyticsEngine.filterRejection(state.rejections, deptFilter);
+      const totalProd = prodData.length > 0 ? prodData.reduce((s, r) => s + (r.quantity || 0), 0) : MetricValue.NO_DATA;
+      const totalRej = rejData.length > 0 ? rejData.reduce((s, r) => s + (r.quantity || 0), 0) : MetricValue.NO_DATA;
+
+      let rejPct = MetricValue.NO_DATA;
+      if (typeof totalProd === "number" && typeof totalRej === "number" && (totalProd + totalRej) > 0) {
+        rejPct = ((totalRej / (totalProd + totalRej)) * 100).toFixed(2);
+      }
+
+      let extraContent = "";
+      if (deptCode === "KAMAL_REJECTION") {
+        const srcData = analyticsEngine.buildRejectionBySource(state.rejections, currentFilter);
+        const rebuffData = analyticsEngine.buildRebuffingTrend(state.rejections, currentFilter);
+        extraContent = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+              <h4 class="font-bold text-xs uppercase text-slate-700 mb-2">Rejection by Source (KAMAL / MRN / DSPL)</h4>
+              <div class="space-y-2">
+                ${srcData.points.map(s => `
+                  <div class="flex justify-between text-xs p-2 bg-slate-50 rounded">
+                    <span class="font-bold text-slate-800">${s.source}</span>
+                    <span class="font-semibold text-rose-700">${MetricValue.format(s.quantity, "pcs")}</span>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200">
+              <h4 class="font-bold text-xs uppercase text-slate-700 mb-2">Rebuffing Trend (KAMAL Rebuffed Only)</h4>
+              <div class="text-xs text-purple-900 bg-purple-50 p-3 rounded-lg border border-purple-200">
+                Total Rebuffed: <strong>${MetricValue.format(rebuffData.points.reduce((sum, p) => sum + (typeof p.value === "number" ? p.value : 0), 0), "pcs")}</strong>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (deptCode === "GIL_DELIVERY") {
+        extraContent = `
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-xs text-blue-900 mt-4">
+            <span class="font-bold">GIL Delivery Applicable Models:</span> All 7 models (including strictly restricted models <strong>U180</strong> and <strong>MAXR</strong>).
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">${deptCode.replace("_", " ")} Department Live Status</h3>
+              <p class="text-xs text-slate-500">Live operational data filtered for ${deptCode}</p>
+            </div>
+            <span class="px-3 py-1 bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg border border-indigo-200">Active Dept</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div class="text-slate-500 font-medium">Department Production</div>
+              <div class="text-2xl font-bold text-slate-900 mt-1">${MetricValue.format(totalProd, "pcs")}</div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div class="text-slate-500 font-medium">Department Rejection</div>
+              <div class="text-2xl font-bold text-rose-600 mt-1">${MetricValue.format(totalRej, "pcs")}</div>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div class="text-slate-500 font-medium">Rejection Rate %</div>
+              <div class="text-2xl font-bold text-slate-900 mt-1">${rejPct !== MetricValue.NO_DATA ? rejPct + "%" : "NO DATA"}</div>
+            </div>
+          </div>
+
+          ${extraContent}
+        </div>
+      `;
+    }
+
+    /**
+     * Production History
+     */
+    function renderProductionHistory(state) {
+      const tbody = document.getElementById("prodHistoryTableBody");
+      const countLabel = document.getElementById("prodRecordCountLabel");
+      if (!tbody) return;
+
+      const prods = state.productions || [];
+      if (countLabel) countLabel.textContent = `${prods.length} records loaded`;
+
+      if (prods.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-slate-400 no-data-tag">NO DATA recorded yet. Submit your first production record above.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = prods.slice(0, 25).map(r => `
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2 font-mono">${r.date || "--"}</td>
+          <td class="px-3 py-2 font-bold text-slate-800">${r.model || "--"}</td>
+          <td class="px-3 py-2 font-semibold text-slate-700">${r.department || "--"}</td>
+          <td class="px-3 py-2">${r.shift || "--"}</td>
+          <td class="px-3 py-2 font-bold text-indigo-700">${(r.quantity || 0).toLocaleString()} pcs</td>
+          <td class="px-3 py-2">${r.operator || "--"}</td>
+          <td class="px-3 py-2 text-[11px] text-slate-400">${r.createdBy || "--"}</td>
+        </tr>
+      `).join("");
+    }
+
+    /**
+     * Rejection & Quality
+     */
+    function renderRejectionAnalysis(state) {
+      const paretoData = analyticsEngine.buildDefectPareto(state.rejections, currentFilter);
+      const tbody = document.getElementById("paretoTableBody");
+      const totalLabel = document.getElementById("paretoTotalLabel");
+
+      if (totalLabel) {
+        totalLabel.textContent = `Total: ${MetricValue.format(paretoData.totalRejection, "pcs")}`;
+      }
+
+      if (tbody) {
+        if (!paretoData.hasData) {
+          tbody.innerHTML = `<tr><td colspan="4" class="px-3 py-6 text-center text-slate-400 no-data-tag">NO DATA available.</td></tr>`;
+        } else {
+          tbody.innerHTML = paretoData.points.map(p => `
+            <tr>
+              <td class="px-3 py-2 font-bold text-slate-800">${p.defectName}</td>
+              <td class="px-3 py-2 font-semibold text-rose-700">${p.quantity}</td>
+              <td class="px-3 py-2 font-medium">${p.percentage.toFixed(1)}%</td>
+              <td class="px-3 py-2 font-bold text-slate-800">${p.cumulativePercentage.toFixed(1)}%</td>
+            </tr>
+          `).join("");
+        }
+      }
+
+      // Side Breakdown: LH vs RH
+      const sideData = analyticsEngine.buildLhVsRh(state.rejections, currentFilter);
+      const sideBox = document.getElementById("sideBreakdownContainer");
+      if (sideBox) {
+        sideBox.innerHTML = sideData.points.map(s => `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <span class="text-slate-500 font-semibold block">${s.side} Side</span>
+            <span class="text-lg font-bold text-slate-800">${MetricValue.format(s.quantity, "pcs")}</span>
+          </div>
+        `).join("");
+      }
+
+      // Source Breakdown: KAMAL, MRN, DSPL
+      const srcData = analyticsEngine.buildRejectionBySource(state.rejections, currentFilter);
+      const srcBox = document.getElementById("sourceBreakdownContainer");
+      if (srcBox) {
+        srcBox.innerHTML = srcData.points.map(s => `
+          <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg">
+            <span class="text-slate-500 font-medium block">${s.source}</span>
+            <span class="text-sm font-bold text-slate-800">${MetricValue.format(s.quantity, "pcs")}</span>
+          </div>
+        `).join("");
+      }
+
+      // Rebuffing Analysis
+      const rebuffData = analyticsEngine.buildRebuffingTrend(state.rejections, currentFilter);
+      const rebuffBox = document.getElementById("rebuffingAnalysisContainer");
+      if (rebuffBox) {
+        const totalRebuffed = rebuffData.points.reduce((sum, p) => sum + (typeof p.value === "number" ? p.value : 0), 0);
+        rebuffBox.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span>Total KAMAL Rebuffed Units:</span>
+            <span class="font-bold text-purple-900 text-sm">${MetricValue.format(totalRebuffed, "pcs")}</span>
+          </div>
+          <span class="text-[11px] text-purple-700 block mt-1">Rule: Only KAMAL rejection source is eligible for rebuffing.</span>
+        `;
+      }
+    }
+
+    /**
+     * Planning View (Separate collections)
+     */
+    function renderPlanningView(state) {
+      const tbody = document.getElementById("plansTableBody");
+      if (!tbody) return;
+
+      const dates = analyticsEngine.filterProduction(state.productions, currentFilter)
+        .map(r => r.date)
+        .concat(state.dailyPlans.map(p => p.date));
+      const uniqueDates = Array.from(new Set(dates)).sort().reverse();
+
+      if (uniqueDates.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="px-3 py-6 text-center text-slate-400 no-data-tag">NO DATA recorded yet. Submit a daily target above.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = uniqueDates.slice(0, 15).map(d => {
+        const dailyTarget = state.dailyPlans.filter(p => p.date === d).reduce((s, p) => s + (p.plannedQuantity || 0), 0);
+        const actual = state.productions.filter(p => p.date === d).reduce((s, p) => s + (p.quantity || 0), 0);
+        const gilDelivery = state.productions.filter(p => p.date === d && p.department === "GIL_DELIVERY").reduce((s, p) => s + (p.quantity || 0), 0);
+        const ach = dailyTarget > 0 ? ((actual / dailyTarget) * 100).toFixed(1) + "%" : "NO DATA";
+
+        return `
+          <tr>
+            <td class="px-3 py-2 font-mono">${d}</td>
+            <td class="px-3 py-2 text-slate-500 italic">Separate (Customer Plan)</td>
+            <td class="px-3 py-2 text-slate-500 italic">Separate (Monthly Plan)</td>
+            <td class="px-3 py-2 font-bold text-slate-800">${dailyTarget > 0 ? dailyTarget.toLocaleString() + " pcs" : "NO DATA"}</td>
+            <td class="px-3 py-2 font-bold text-indigo-700">${actual > 0 ? actual.toLocaleString() + " pcs" : "0 pcs"}</td>
+            <td class="px-3 py-2 font-semibold text-blue-700">${gilDelivery > 0 ? gilDelivery.toLocaleString() + " pcs" : "0 pcs"}</td>
+            <td class="px-3 py-2 font-bold text-emerald-600">${ach}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    /**
+     * Stock View (Manual Opening / Closing)
+     */
+    function renderStockView(state) {
+      const tbody = document.getElementById("stockTableBody");
+      if (!tbody) return;
+
+      const stocks = state.stocks || [];
+      if (stocks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400 no-data-tag">NO DATA. Record manual stock count above.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = stocks.slice(0, 20).map(s => {
+        const isBalanced = (s.variance || 0) === 0;
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 font-mono">${s.date || "--"}</td>
+            <td class="px-3 py-2 font-bold text-slate-900">${s.model || "--"}</td>
+            <td class="px-3 py-2 font-semibold">${MetricValue.format(s.openingQuantity, "pcs")}</td>
+            <td class="px-3 py-2 text-emerald-600">+${MetricValue.format(s.receivedQuantity || 0)}</td>
+            <td class="px-3 py-2 text-rose-600">-${MetricValue.format(s.consumedQuantity || 0)}</td>
+            <td class="px-3 py-2 font-bold text-slate-800">${MetricValue.format(s.closingQuantity, "pcs")}</td>
+            <td class="px-3 py-2 font-bold ${isBalanced ? 'text-emerald-600' : 'text-rose-600'}">
+              ${(s.variance || 0) > 0 ? "+" : ""}${s.variance || 0} pcs
+            </td>
+            <td class="px-3 py-2 text-[11px] text-slate-400">${s.auditedBy || "--"}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    /**
+     * Action Tracker
+     */
+    function renderActionsView(state) {
+      const tbody = document.getElementById("actionsTableBody");
+      const countLabel = document.getElementById("actionsCountLabel");
+      if (!tbody) return;
+
+      const actions = state.actions || [];
+      if (countLabel) countLabel.textContent = `${actions.length} actions loaded`;
+
+      if (actions.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400 no-data-tag">No action items found. Create one above.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = actions.map(a => {
+        let pColor = "bg-slate-100 text-slate-700";
+        if (a.priority === "CRITICAL") pColor = "bg-rose-100 text-rose-800 border-rose-200";
+        else if (a.priority === "HIGH") pColor = "bg-amber-100 text-amber-800 border-amber-200";
+        else if (a.priority === "MEDIUM") pColor = "bg-blue-100 text-blue-800 border-blue-200";
+
+        let sColor = "bg-slate-100 text-slate-700";
+        if (a.status === "COMPLETED") sColor = "bg-emerald-100 text-emerald-800";
+        else if (a.status === "IN_PROGRESS") sColor = "bg-indigo-100 text-indigo-800";
+        else if (a.status === "OPEN") sColor = "bg-amber-50 text-amber-700";
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 font-mono text-[11px]">${(a.id || "").substring(0, 8)}</td>
+            <td class="px-3 py-2 font-semibold text-slate-800">${a.department || "--"}</td>
+            <td class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold border ${pColor}">${a.priority || "MEDIUM"}</span></td>
+            <td class="px-3 py-2 font-medium text-slate-900">${a.description || "--"}</td>
+            <td class="px-3 py-2 text-slate-600">${a.assignee || "--"}</td>
+            <td class="px-3 py-2 font-mono text-slate-600">${a.dueDate || "--"}</td>
+            <td class="px-3 py-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${sColor}">${a.status || "OPEN"}</span></td>
+            <td class="px-3 py-2 space-x-1">
+              ${a.status !== "COMPLETED" ? `<button onclick="updateActionStatus('${a.id}', 'COMPLETED')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-semibold">Done</button>` : ""}
+              ${a.status === "OPEN" ? `<button onclick="updateActionStatus('${a.id}', 'IN_PROGRESS')" class="px-2 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-semibold">Start</button>` : ""}
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    /**
+     * Alerts Engine View
+     */
+    function renderAlertsView(state) {
+      const container = document.getElementById("alertsContainer");
+      const badge = document.getElementById("alertsCountBadge");
+      const subHeader = document.getElementById("alertsSubHeaderBadge");
+      if (!container) return;
+
+      const alerts = state.alerts || [];
+      const openAlerts = alerts.filter(a => a.status === "OPEN");
+      if (badge) badge.textContent = openAlerts.length;
+      if (subHeader) subHeader.textContent = `${openAlerts.length} Open Alerts in alert_records`;
+
+      if (alerts.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-xs text-slate-400 no-data-tag rounded-xl">No active or resolved telemetry alerts in Firestore. System within normal thresholds.</div>`;
+        return;
+      }
+
+      container.innerHTML = alerts.map(a => {
+        const isResolved = a.status === "RESOLVED";
+        const isHigh = a.severity === "HIGH" || a.severity === "CRITICAL";
+        return `
+          <div class="p-4 ${isResolved ? 'bg-slate-50 border-slate-200 opacity-60' : (isHigh ? 'bg-rose-50 border-rose-200' : 'bg-amber-50 border-amber-200')} border rounded-xl flex items-start justify-between gap-4">
+            <div class="flex items-start space-x-3">
+              <i class="fa-solid ${isHigh ? 'fa-triangle-exclamation text-rose-600' : 'fa-circle-exclamation text-amber-600'} text-lg mt-0.5"></i>
+              <div class="text-xs">
+                <div class="flex items-center space-x-2">
+                  <span class="font-bold ${isHigh ? 'text-rose-900' : 'text-amber-900'} text-sm">${a.severity || "INFO"}: ${a.title || "Telemetry Trigger"}</span>
+                  <span class="px-2 py-0.2 rounded text-[10px] font-bold ${isResolved ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-200 text-rose-900'}">${a.status || "OPEN"}</span>
+                </div>
+                <p class="${isHigh ? 'text-rose-800' : 'text-amber-800'} mt-1">${a.message || "Threshold violation detected on manufacturing line."}</p>
+                <div class="text-slate-400 font-mono text-[10px] mt-1">Code: ${a.code || "MIS-ALT"} | Machine: ${a.machineId || "DSPL-LINE"} | Date: ${a.date || getTodayDate()}</div>
+              </div>
+            </div>
+            ${!isResolved ? `<button onclick="resolveAlert('${a.id}')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold whitespace-nowrap shadow">Acknowledge</button>` : `<span class="text-emerald-600 text-xs font-semibold whitespace-nowrap"><i class="fa-solid fa-check"></i> Resolved</span>`}
+          </div>
+        `;
+      }).join("");
+    }
+
+    /**
+     * Executive Meeting Pack View
+     */
+    function renderExecutivePack(state) {
+      const periodLabel = document.getElementById("packPeriodLabel");
+      if (periodLabel) periodLabel.textContent = `Period: ${currentFilter.fromDate} to ${currentFilter.toDate}`;
+
+      const summary = analyticsEngine.generateExecutiveSummary({
+        productions: state.productions,
+        plans: state.dailyPlans,
+        rejections: state.rejections,
+        stocks: state.stocks,
+        actions: state.actions,
+        alerts: state.alerts,
+        filter: currentFilter
+      });
+
+      document.getElementById("packVolume").textContent = MetricValue.format(summary.totalProduction, "pcs");
+      document.getElementById("packVolumeSub").textContent = `Plan Achievement: ${summary.achievementPercentage !== MetricValue.NO_DATA ? summary.achievementPercentage.toFixed(1) + "%" : "NO DATA"}`;
+      
+      const fpy = summary.rejectionPercentage !== MetricValue.NO_DATA
+        ? (100 - summary.rejectionPercentage).toFixed(2) + "%"
+        : "NO DATA";
+      document.getElementById("packFpy").textContent = fpy;
+      document.getElementById("packFpySub").textContent = `Rejection: ${summary.rejectionPercentage !== MetricValue.NO_DATA ? summary.rejectionPercentage.toFixed(2) + "%" : "NO DATA"}`;
+      document.getElementById("packStockVar").textContent = MetricValue.format(summary.stockVariance, "pcs");
+
+      // Dept table
+      const deptFlow = analyticsEngine.buildDepartmentWiseProduction(state.productions, currentFilter);
+      const deptRej = analyticsEngine.buildRejectionByDepartment(state.rejections, currentFilter);
+      const deptTable = document.getElementById("packDeptTableBody");
+      if (deptTable) {
+        deptTable.innerHTML = deptFlow.points.map(dp => {
+          const dr = deptRej.points.find(r => r.department === dp.department);
+          return `
+            <tr>
+              <td class="px-3 py-2 font-bold text-slate-800">${dp.sequence}. ${dp.department}</td>
+              <td class="px-3 py-2 font-semibold text-slate-700">${MetricValue.format(dp.quantity, "pcs")}</td>
+              <td class="px-3 py-2 font-semibold text-rose-600">${MetricValue.format(dr ? dr.quantity : MetricValue.NO_DATA, "pcs")}</td>
+              <td class="px-3 py-2 text-emerald-600 font-semibold">Active</td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      // Action Summary
+      const actBox = document.getElementById("packActionSummaryContainer");
+      if (actBox) {
+        const aSum = summary.actionSummary;
+        actBox.innerHTML = `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <span class="text-slate-500 font-medium block">Total CAPA Actions</span>
+            <span class="text-lg font-bold text-slate-900">${aSum.totalActions}</span>
+          </div>
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <span class="text-amber-700 font-medium block">Open / Active</span>
+            <span class="text-lg font-bold text-amber-900">${aSum.openActions}</span>
+          </div>
+          <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg">
+            <span class="text-rose-700 font-medium block">Critical / High</span>
+            <span class="text-lg font-bold text-rose-900">${aSum.criticalActions + aSum.highActions}</span>
+          </div>
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <span class="text-emerald-700 font-medium block">Completed</span>
+            <span class="text-lg font-bold text-emerald-900">${aSum.completedActions}</span>
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * FORM SUBMISSION HANDLERS
+     */
+    async function submitProduction() {
+      const date = document.getElementById("prodEntryDate").value;
+      const model = document.getElementById("prodEntryModel").value;
+      const department = document.getElementById("prodEntryDept").value;
+      const shift = document.getElementById("prodEntryShift").value;
+      const quantity = parseInt(document.getElementById("prodEntryUnits").value, 10);
+      const operator = document.getElementById("prodEntryOperator").value;
+      const downtimeMinutes = parseInt(document.getElementById("prodEntryDowntime").value || "0", 10);
+
+      if (!date || isNaN(quantity) || quantity < 0) {
+        alert("Please enter a valid date and positive quantity.");
+        return;
+      }
+
+      try {
+        await webDataAccess.recordProduction({
+          date,
+          model,
+          department,
+          shift,
+          quantity,
+          operator,
+          downtimeMinutes
+        }, webAuth.getUserContext());
+        alert("Production shift entry recorded successfully in Firestore.");
+        document.getElementById("prodEntryUnits").value = "";
+      } catch (err) {
+        alert("Submission Failed: " + err.message);
+      }
+    }
+
+    async function submitRejection() {
+      const date = document.getElementById("rejEntryDate").value;
+      const model = document.getElementById("rejEntryModel").value;
+      const department = document.getElementById("rejEntryDept").value;
+      const defectName = document.getElementById("rejEntryDefect").value;
+      const source = document.getElementById("rejEntrySource").value;
+      const businessArea = document.getElementById("rejEntryArea").value;
+      const side = document.getElementById("rejEntrySide").value;
+      const quantity = parseInt(document.getElementById("rejEntryUnits").value, 10);
+      const isRebuffed = document.getElementById("rejEntryIsRebuffed").checked;
+
+      if (!date || isNaN(quantity) || quantity <= 0) {
+        alert("Please enter a valid date and quantity.");
+        return;
+      }
+
+      try {
+        await webDataAccess.recordRejection({
+          date,
+          model,
+          department,
+          defectName,
+          source,
+          businessArea,
+          side,
+          quantity,
+          isRebuffed
+        }, webAuth.getUserContext());
+        alert("Quality rejection entry recorded successfully in Firestore.");
+        document.getElementById("rejEntryUnits").value = "";
+      } catch (err) {
+        alert("Rejection Submission Failed: " + err.message);
+      }
+    }
+
+    async function submitDailyPlan() {
+      const date = document.getElementById("planEntryDate").value;
+      const model = document.getElementById("planEntryModel").value;
+      const department = document.getElementById("planEntryDept").value;
+      const plannedQuantity = parseInt(document.getElementById("planEntryUnits").value, 10);
+
+      if (!date || isNaN(plannedQuantity) || plannedQuantity <= 0) {
+        alert("Please enter a valid date and plan quantity.");
+        return;
+      }
+
+      try {
+        await webDataAccess.recordDailyPlan({
+          date,
+          model,
+          department,
+          plannedQuantity
+        }, webAuth.getUserContext());
+        alert("Daily Target saved successfully in dailyPlans collection.");
+        document.getElementById("planEntryUnits").value = "";
+      } catch (err) {
+        alert("Plan Submission Failed: " + err.message);
+      }
+    }
+
+    async function submitStockAudit() {
+      const date = document.getElementById("stockEntryDate").value;
+      const model = document.getElementById("stockEntryModel").value;
+      const openingQuantity = parseInt(document.getElementById("stockEntryOpening").value, 10);
+      const receivedQuantity = parseInt(document.getElementById("stockEntryReceived").value || "0", 10);
+      const consumedQuantity = parseInt(document.getElementById("stockEntryConsumed").value || "0", 10);
+      const closingQuantity = parseInt(document.getElementById("stockEntryClosing").value, 10);
+
+      if (!date || isNaN(openingQuantity) || isNaN(closingQuantity)) {
+        alert("Please manually enter both Opening and Closing stock quantities.");
+        return;
+      }
+
+      try {
+        await webDataAccess.recordStockReconciliation({
+          date,
+          model,
+          openingQuantity,
+          receivedQuantity,
+          consumedQuantity,
+          closingQuantity
+        }, webAuth.getUserContext());
+        alert("Stock reconciliation record saved successfully in stock_records.");
+      } catch (err) {
+        alert("Stock Submission Failed: " + err.message);
+      }
+    }
+
+    async function submitActionItem() {
+      const department = document.getElementById("actionEntryDept").value;
+      const priority = document.getElementById("actionEntryPriority").value;
+      const assignee = document.getElementById("actionEntryAssignee").value;
+      const dueDate = document.getElementById("actionEntryDueDate").value;
+      const description = document.getElementById("actionEntryDesc").value;
+
+      if (!description) {
+        alert("Please enter an action description.");
+        return;
+      }
+
+      try {
+        await webDataAccess.createAction({
+          department,
+          priority,
+          assignee,
+          dueDate,
+          description,
+          status: "OPEN"
+        }, webAuth.getUserContext());
+        alert("Action item created successfully in action_records.");
+        document.getElementById("actionEntryDesc").value = "";
+      } catch (err) {
+        alert("Action Creation Failed: " + err.message);
+      }
+    }
+
+    async function updateActionStatus(actionId, newStatus) {
+      try {
+        await webDataAccess.updateActionStatus(actionId, newStatus, webAuth.getUserContext());
+      } catch (err) {
+        alert("Action update failed: " + err.message);
+      }
+    }
+
+    async function resolveAlert(alertId) {
+      try {
+        await webDataAccess.resolveAlert(alertId, webAuth.getUserContext());
+      } catch (err) {
+        alert("Could not resolve alert: " + err.message);
+      }
+    }
+
+    function openAuthModal() {
+      if (webAuth.currentUser) {
+        webAuth.signOut();
+        return;
+      }
+      document.getElementById("authModal").classList.remove("hidden");
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.add("hidden");
+    }
+
+    async function handleSignInSubmit() {
+      const email = document.getElementById("authEmail").value;
+      const password = document.getElementById("authPassword").value;
+      const errorDiv = document.getElementById("authErrorMsg");
+      if (!email || !password) {
+        errorDiv.textContent = "Please provide both email and password.";
+        errorDiv.classList.remove("hidden");
+        return;
+      }
+      try {
+        await webAuth.signIn(email, password);
+        closeAuthModal();
+      } catch (err) {
+        errorDiv.textContent = err.message || "Failed to authenticate with Firebase.";
+        errorDiv.classList.remove("hidden");
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.5"
+        android:scaleY="2.5"
+        android:translateX="24.0"
+        android:translateY="24.0">
+        <!-- Precision Stamping & Factory MIS symbol -->
+        <path
+            android:fillColor="#38BDF8"
+            android:pathData="M12,2L4,5v6.09c0,5.05 3.41,9.76 8,10.91c4.59,-1.15 8,-5.86 8,-10.91V5L12,2z" />
+        <path
+            android:fillColor="#0F172A"
+            android:pathData="M12,4.15l6,2.25v4.69c0,4.08 -2.67,7.88 -6,8.87c-3.33,-0.99 -6,-4.79 -6,-8.87V6.4L12,4.15z" />
+        <path
+            android:fillColor="#F8FAFC"
+            android:pathData="M11,7h2v6h-2z" />
+        <path
+            android:fillColor="#F8FAFC"
+            android:pathData="M8,10h8v2H8z" />
+        <path
+            android:fillColor="#38BDF8"
+            android:pathData="M9,14h6v1.5H9z" />
+    </group>
+</vector>

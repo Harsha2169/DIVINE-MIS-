@@ -1,5 +1,6 @@
 package com.example.ui.dashboard
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,11 +43,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.analytics.DashboardKpis
 import com.example.analytics.DashboardState
 import com.example.analytics.DashboardViewModel
@@ -132,21 +136,25 @@ private fun ExecutiveHeader(state: DashboardState) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color.White,
+                    shadowElevation = 2.dp,
+                    modifier = Modifier
+                        .height(48.dp)
+                        .width(96.dp)
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Factory,
-                            contentDescription = "Executive MIS",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.dspl_logo),
+                        contentDescription = "Official DSPL Logo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                            .testTag("dashboard_brand_logo"),
+                        contentScale = ContentScale.Fit
+                    )
                 }
                 Column {
                     Text(
@@ -157,9 +165,10 @@ private fun ExecutiveHeader(state: DashboardState) {
                         modifier = Modifier.testTag("dashboard_company_title")
                     )
                     Text(
-                        text = "Core Manufacturing MIS Dashboard",
+                        text = "ADDING EXCELLENCE • Executive Control Tower",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="600" height="160">
+  <defs>
+    <linearGradient id="dsplNavy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A2540" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+    <linearGradient id="dsplRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DC2626" />
+      <stop offset="100%" stop-color="#991B1B" />
+    </linearGradient>
+    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <filter id="subtleDrop" x="-5%" y="-5%" width="115%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Clean Background Badge for universal contrast -->
+  <rect x="2" y="2" width="596" height="156" rx="16" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
+
+  <!-- EMBLEM: Precision Sheet Metal Stamping Die & Divine D Motif -->
+  <g transform="translate(24, 22)">
+    <!-- Outer Stamping Block / Press Die (Navy) -->
+    <path d="M 12 12 L 68 12 C 94 12, 114 32, 114 58 C 114 84, 94 104, 68 104 L 12 104 Z" 
+          fill="url(#dsplNavy)" />
+    
+    <!-- Precision Machined Inner Cavity -->
+    <path d="M 38 32 L 64 32 C 78 32, 88 42, 88 58 C 88 74, 78 84, 64 84 L 38 84 Z" 
+          fill="#FFFFFF" />
+
+    <!-- Industrial Stamping Press Punch / Core Wedge (Flame Red) -->
+    <path d="M 12 38 L 48 58 L 12 78 Z" fill="url(#dsplRed)" />
+
+    <!-- Technical Stamping Accent Notch -->
+    <rect x="52" y="52" width="16" height="12" rx="2" fill="url(#steelGrad)" />
+    <circle cx="88" cy="58" r="5" fill="url(#dsplRed)" />
+  </g>
+
+  <!-- BRAND TYPOGRAPHY -->
+  <g transform="translate(160, 24)">
+    <!-- Primary Brand Acronym: DSPL -->
+    <text x="0" y="54" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+          font-size="52" font-weight="900" fill="#0A2540" letter-spacing="2">DSPL</text>
+    
+    <!-- Accent Stamping Element on Brand Name -->
+    <rect x="144" y="20" width="8" height="34" rx="2" fill="url(#dsplRed)" />
+
+    <!-- Official Corporate Name: DIVINE STAMP PVT LTD -->
+    <text x="0" y="80" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+          font-size="17" font-weight="800" fill="#1E3A8A" letter-spacing="1.2">DIVINE STAMP PVT LTD</text>
+
+    <!-- Divider Line -->
+    <line x1="0" y1="92" x2="410" y2="92" stroke="#CBD5E1" stroke-width="1.5" />
+    <rect x="0" y="91" width="48" height="3" fill="#DC2626" rx="1" />
+
+    <!-- Official Tagline: ADDING EXCELLENCE -->
+    <g transform="translate(0, 110)">
+      <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+            font-size="13" font-weight="800" fill="#DC2626" letter-spacing="4">ADDING EXCELLENCE</text>
+      <circle cx="210" cy="-4" r="2.5" fill="#0A2540" />
+      <text x="224" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+            font-size="10.5" font-weight="700" fill="#64748B" letter-spacing="1.8">MANUFACTURING MIS</text>
+    </g>
+  </g>
+</svg>

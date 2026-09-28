@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +39,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,10 +48,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.R
 import com.example.action.ActionRecord
 import com.example.alert.AlertRecord
 import com.example.model.PlanRecord
@@ -95,17 +100,39 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "Login Security Icon",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-                Text(
-                    text = "Divine Stamp MIS Login",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = androidx.compose.ui.graphics.Color.White,
+                    shadowElevation = 2.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(84.dp)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.dspl_logo),
+                        contentDescription = "Official DSPL Logo — Divine Stamp Pvt Ltd",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                            .testTag("login_brand_logo"),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "DIVINE STAMP PVT LTD",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "ADDING EXCELLENCE • Manufacturing MIS",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -510,9 +537,47 @@ fun AlertCard(alert: AlertRecord, canModify: Boolean, onAcknowledge: (String) ->
 fun MeetingPackSummaryCard(pack: ManagementMeetingPack) {
     Card(
         modifier = Modifier.fillMaxWidth().testTag("meeting_pack_summary_card"),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = androidx.compose.ui.graphics.Color.White,
+                    shadowElevation = 2.dp,
+                    modifier = Modifier
+                        .height(44.dp)
+                        .width(88.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.dspl_logo),
+                        contentDescription = "Official DSPL Logo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                            .testTag("meeting_pack_brand_logo"),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Column {
+                    Text(
+                        text = "DIVINE STAMP PVT LTD",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "ADDING EXCELLENCE • Executive Pack",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             Text(text = pack.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
             Text(text = "Overall Health: ${pack.kpis.size} KPIs tracked")
             Text(text = "Total Production: ${pack.productionSection.totalProduction}")

@@ -173,6 +173,54 @@ export class WebDataAccessService {
     };
     this.listeners = [];
     this.initSubscriptions();
+    this.initPreloadedData();
+  }
+
+  initPreloadedData() {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const cached = localStorage.getItem("DIVINE_SEPTEMBER_IMPORT_DATA");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          this.loadImportedSeptemberData(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load cached September data:", e);
+    }
+
+    if (typeof fetch !== "undefined") {
+      fetch("./september-data.json")
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            this.loadImportedSeptemberData(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  loadImportedSeptemberData(data) {
+    if (!data) return;
+    let updated = false;
+    if (Array.isArray(data.productions) && data.productions.length > 0) {
+      const prodMap = new Map();
+      this.state.productions.forEach(p => prodMap.set(p.id, p));
+      data.productions.forEach(p => prodMap.set(p.id, p));
+      this.state.productions = Array.from(prodMap.values());
+      updated = true;
+    }
+    if (Array.isArray(data.rejections) && data.rejections.length > 0) {
+      const rejMap = new Map();
+      this.state.rejections.forEach(r => rejMap.set(r.id, r));
+      data.rejections.forEach(r => rejMap.set(r.id, r));
+      this.state.rejections = Array.from(rejMap.values());
+      updated = true;
+    }
+    if (updated) {
+      this.notifyState();
+    }
   }
 
   subscribeState(fn) {

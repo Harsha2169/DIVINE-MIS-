@@ -13,6 +13,13 @@
       document.write('<script src="assets/chart.umd.min.js"><\/script>');
     }
   </script>
+  <!-- SheetJS CDN with local asset fallback for September 2026 schema-ready import -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="assets/xlsx.full.min.js"><\/script>');
+    }
+  </script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     .badge-ceo { background-color: #ede9fe; color: #6d28d9; border: 1px solid #c4b5fd; }
@@ -66,6 +73,12 @@
         <button id="authBtn" onclick="openAuthModal()" class="flex items-center space-x-1.5 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-500 transition shadow">
           <i class="fa-solid fa-user-shield text-xs"></i>
           <span id="authBtnText">Sign In</span>
+        </button>
+
+        <!-- September 2026 Import Button -->
+        <button onclick="openImportModal()" class="flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-400 transition shadow">
+          <i class="fa-solid fa-file-excel text-xs text-emerald-300"></i>
+          <span>Import Sep Data</span>
         </button>
 
         <a href="#android-info" class="hidden xl:inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition shadow">
@@ -1198,6 +1211,41 @@
     </div>
   </div>
 
+  <!-- SEPTEMBER WORKBOOK IMPORT MODAL -->
+  <div id="importModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-file-excel text-emerald-600 text-lg"></i>
+          <h3 class="font-bold text-slate-900 text-base">Import September 2026 Schema-Ready Data</h3>
+        </div>
+        <button onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-slate-600 leading-relaxed">
+          Select or drop the schema-ready workbook <code class="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-indigo-700 font-semibold">DIVINE_MIS_SEPTEMBER_2026_SCHEMA_DATA.xlsx</code>.
+          Expected sheets: <span class="font-bold text-slate-800">Production_Fact (1260 records)</span>, <span class="font-bold text-slate-800">Rejection_Row_Fact (419 KAMAL / 420 MRN)</span>, <span class="font-bold text-slate-800">Rejection_Defect_Fact (611 KAMAL / 84 MRN)</span>, and <span class="font-bold text-slate-800">Data_Quality</span>.
+        </p>
+
+        <div class="border-2 border-dashed border-indigo-200 hover:border-indigo-400 rounded-xl p-6 text-center bg-indigo-50/40 transition cursor-pointer" onclick="document.getElementById('workbookFileInput').click()">
+          <i class="fa-solid fa-cloud-arrow-up text-indigo-600 text-3xl mb-2"></i>
+          <div class="font-bold text-slate-800 text-sm">Click to Select Workbook File</div>
+          <div class="text-[11px] text-slate-500 mt-1">Accepts DIVINE_MIS_SEPTEMBER_2026_SCHEMA_DATA.xlsx</div>
+          <input type="file" id="workbookFileInput" accept=".xlsx,.xls" class="hidden" onchange="handleWorkbookFileSelected(event)">
+        </div>
+
+        <div id="importValidationSummary" class="hidden p-4 rounded-xl border space-y-2 bg-slate-50 border-slate-200">
+          <!-- Dynamically populated report -->
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-2 border-t border-slate-100">
+        <button onclick="closeImportModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-50">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- APPLICATION JAVASCRIPT MODULE -->
   <script type="module">
     import { app, auth, db, getActiveFirebaseConfig } from "./firebase-config.js";
@@ -1228,11 +1276,15 @@
       destroyAllCharts,
       destroyChart
     } from "./chart-manager.js";
+    import { processSeptemberWorkbook, EXPECTED_COUNTS } from "./september-importer.js";
 
     // Bind window functions
     window.switchTab = switchTab;
     window.openAuthModal = openAuthModal;
     window.closeAuthModal = closeAuthModal;
+    window.openImportModal = openImportModal;
+    window.closeImportModal = closeImportModal;
+    window.handleWorkbookFileSelected = handleWorkbookFileSelected;
     window.handleSignInSubmit = handleSignInSubmit;
     window.applyFilters = applyFilters;
     window.setDatePreset = setDatePreset;
@@ -2228,6 +2280,110 @@
 
     function closeAuthModal() {
       document.getElementById("authModal").classList.add("hidden");
+    }
+
+    function openImportModal() {
+      document.getElementById("importModal").classList.remove("hidden");
+    }
+
+    function closeImportModal() {
+      document.getElementById("importModal").classList.add("hidden");
+    }
+
+    async function handleWorkbookFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const summaryBox = document.getElementById("importValidationSummary");
+      summaryBox.classList.remove("hidden");
+      summaryBox.innerHTML = `
+        <div class="flex items-center space-x-2 text-indigo-700">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span class="font-bold">Parsing and validating schema workbook: ${file.name}...</span>
+        </div>
+      `;
+
+      try {
+        const data = await file.arrayBuffer();
+        if (typeof XLSX === "undefined") {
+          throw new Error("XLSX library not loaded. Ensure assets/xlsx.full.min.js is accessible.");
+        }
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetsData = {};
+        for (const s of workbook.SheetNames) {
+          sheetsData[s] = XLSX.utils.sheet_to_json(workbook.Sheets[s]);
+        }
+
+        const result = processSeptemberWorkbook(sheetsData);
+
+        // Save imported September data into client state & localStorage
+        const exportPayload = {
+          metadata: {
+            source: file.name,
+            importTimestamp: new Date().toISOString(),
+            productionCount: result.production.totalImported,
+            rejectionRowCount: result.rejectionRows.totalImported,
+            rejectionDefectCount: result.rejectionDefects.totalImported,
+            dsplStatus: "NO_DATA"
+          },
+          productions: result.production.records,
+          rejectionRows: result.rejectionRows.records,
+          rejections: result.rejectionDefects.records
+        };
+
+        if (typeof localStorage !== "undefined") {
+          localStorage.setItem("DIVINE_SEPTEMBER_IMPORT_DATA", JSON.stringify(exportPayload));
+        }
+
+        webDataAccess.loadImportedSeptemberData(exportPayload);
+
+        // Update active date filter to September 2026
+        currentFilter.fromDate = "2026-09-01";
+        currentFilter.toDate = "2026-09-30";
+        document.getElementById("filterFromDate").value = "2026-09-01";
+        document.getElementById("filterToDate").value = "2026-09-30";
+
+        // Refresh views and charts
+        renderAllViews(webDataAccess.state);
+
+        summaryBox.className = "p-4 rounded-xl border space-y-2.5 bg-emerald-50 border-emerald-200 text-emerald-900";
+        summaryBox.innerHTML = `
+          <div class="flex items-center space-x-2 font-bold text-emerald-800 text-sm">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span>September 2026 Data Successfully Imported</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs pt-1 font-mono">
+            <div class="bg-white/80 p-2 rounded border border-emerald-100">
+              <span class="text-slate-500 block text-[10px]">Production Fact</span>
+              <strong class="text-emerald-900">${result.production.totalImported} / ${EXPECTED_COUNTS.PRODUCTION_FACT}</strong>
+            </div>
+            <div class="bg-white/80 p-2 rounded border border-emerald-100">
+              <span class="text-slate-500 block text-[10px]">KAMAL Rejections</span>
+              <strong class="text-emerald-900">${result.rejectionRows.kamalCount} rows (${result.rejectionDefects.kamalDefectCount} defects)</strong>
+            </div>
+            <div class="bg-white/80 p-2 rounded border border-emerald-100">
+              <span class="text-slate-500 block text-[10px]">MRN Rejections</span>
+              <strong class="text-emerald-900">${result.rejectionRows.mrnCount} rows (${result.rejectionDefects.mrnDefectCount} defects)</strong>
+            </div>
+            <div class="bg-white/80 p-2 rounded border border-emerald-100">
+              <span class="text-slate-500 block text-[10px]">DSPL Rejection</span>
+              <strong class="text-amber-800 font-bold">NO_DATA (0 imported)</strong>
+            </div>
+          </div>
+          <div class="text-[11px] text-emerald-700 font-medium">
+            Active date range updated to September 1–30, 2026. All 6 charts, tables, Pareto, and dashboards refreshed.
+          </div>
+        `;
+      } catch (err) {
+        summaryBox.className = "p-4 rounded-xl border space-y-2 bg-rose-50 border-rose-200 text-rose-900";
+        summaryBox.innerHTML = `
+          <div class="flex items-center space-x-2 font-bold text-rose-800">
+            <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+            <span>Import Validation Failed</span>
+          </div>
+          <p class="text-xs text-rose-700">${err.message}</p>
+        `;
+      }
     }
 
     async function handleSignInSubmit() {
